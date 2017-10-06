@@ -44,8 +44,8 @@ void testKmp()
             start=rand()%(lowerStrLen-2);
             length=rand()%(lowerStrLen-start);
             subStr=lowerStr.substr(start,length);
-            result=length ==0 ? -1 : start;
-        }else{
+            result=length ==0 ? -1 : start; //传入空字符串的时候返回-1
+        }else{  //根本找不到
             start=rand()%(upperStrLen-2);
             length=rand()%(upperStrLen-start);
             subStr=upperStr.substr(start,length);
