@@ -8,11 +8,13 @@ using namespace std;
 //kmp的next算法
 void getNextList();
 void testKmp();
+void nextval_from_one();
 int kmp(string str, string t, int pos=0);
 
 int main()
 {
     testKmp();
+    //nextval_from_one();
     return 0;
 }
 
@@ -62,7 +64,7 @@ void testKmp()
 }
 
 
-//符合程序逻辑的从0开始
+//符合程序逻辑的从0开始，next的改进版本
 void getNextList(string& str, int next[])
 {
     //next是保存结果的数组
@@ -73,14 +75,14 @@ void getNextList(string& str, int next[])
 
     int length = str.length();
     while(i < length-1){
-        if(j==-1){   //这个时候要单独处理，因为此时并不存在str[j]
+        if(j==-1 || str[i]==str[j]){   //这个时候要单独处理，因为此时并不存在str[j]
             j++;    //下一次从第1个开始比较
             i++;    //求下一个的next
-            next[i]=0;
-        }else if(str[i]==str[j]){
-            j++;    //说明需要比较的是j的下一个
-            i++;    //求下一个的next
-            next[i]=j;
+            if(str[i]!=str[j]){
+                next[i]=j;
+            }else{
+                next[i]=next[j];
+            }
         }else{
             j=next[j];
         }    
@@ -125,28 +127,46 @@ int kmp(string str, string t, int pos)
     }
 }
 
-//按照算法从1开始的next版本
-void next_from_one()
-{
-    string str="0abaabcac";
-    int next[100];  //保存结果的数组，没有使用next[0]
-    int i=1;    //需要找到P1P2...Pi中的那个k，也就是当前需要求next的下标（也就是当前匹配失败的下边）-1
-    int j=0;    //当前需要求next的下边的上一个对应的next值，也就是next[i]
+//按照算法从1开始的nextval版本
 
-    next[1]=0;
+//改进的点是：当前根据递推关系，在已经有的p1...pk=...pj-1的关系上又得到了p1...pkpk+1=...pj-1pj这个关系，但是不是这样就完了，还需要检测pj+1是否等于pk+1，因为如果相等的话，主串中的s[w]和pj+1比较失败后按理是应该和next[j+1]=Pk+1比较，但是此时pk+1是等于pj+1 != s[p]的，所以应该是直接和next[pk+1]比较，也就是节省这一步
+void nextval_from_one()
+{
+    string str="0aaaab";
+    int nextval[100];  //保存结果的数组，没有使用next[0]
+    int i=1;    //需要找到P1P2...Pi中的那个k，也就是当前需要求next的下标（也就是当前匹配失败的下标）-1
+    int j=0;    //当前需要求next的下标的上一个对应的next值，也就是next[i]
+
+    nextval[1]=0;
 
     int length = str.length();
     while(i < length){
+        //j==0和第二种情况可以合并
         if(j==0){   //这个时候要单独处理，因为此时并不存在str[j]
             j++;    //下一次从第1个开始比较
             i++;    //求下一个的next
-            next[i]=1;
+            
+            if(str[i]!=str[j]){ 
+                nextval[i]=j;
+            }else{
+                nextval[i]=nextval[j];
+            }
+
         }else if(str[i]==str[j]){
             j++;    //说明需要比较的是j的下一个
             i++;    //求下一个的next
-            next[i]=j;
+            //nextval[i]=j; 老版本直接是这个结果，注意下边j代表的意义，就是老版本的nextval[i]
+
+            //p84页的next改进意见,针对P1...Pk=...Pm-1中存在的Pm=Pk这种情况的处理
+            if(str[i]!=str[j]){ //i和j已经自增过了，此时的i代表的是当前需要求next的下标（也就是当前与主串匹配失败的那一位），也就是上边说的m，而j代表的是上边的k（未改进版本的k），此时也就是检测是不是存在pk=pm这种情况
+                nextval[i]=j;
+            }else{
+                nextval[i]=nextval[j];  //如果存在pk=pm，则
+            }
+
+
         }else{
-            j=next[j];
+            j=nextval[j];
         }    
     }
 
